@@ -74,12 +74,45 @@ int main(int argc, char **argv)
       std::cerr << "Scan session duration: " << exit_time << " seconds" << std::endl;
     }
 
-    // Print the available gains and select the one nearest to the requested gain.
-    rtldev.print_gains();
-    int gain = rtldev.nearest_gain(params.gain);
-    std::cerr << "Selected nearest available gain: " << gain
-              << " (" << 0.1*gain << " dB)" << std::endl;
-    rtldev.set_gain(gain);
+  
+    if(params.lna_gain > -1 || params.mixer_gain > -1 || params.vga_gain > -1)
+    {
+        if(params.lna_gain)
+        {
+        	rtldev.print_lna_gains();
+        	int gain = params.lna_gain;
+        	std::cerr << "Selected nearest available lna gain: " << gain
+                  << " (" << 0.1*gain << " dB)" << std::endl;
+        	rtldev.set_lna_gain(gain);
+        }
+        if(params.mixer_gain)
+        {
+        	rtldev.print_mixer_gains();
+        	int gain = params.mixer_gain;
+        	std::cerr << "Selected nearest available mixer gain: " << gain
+                  << " (" << 0.1*gain << " dB)" << std::endl;
+        	rtldev.set_mixer_gain(gain);
+        }
+        if(params.vga_gain)
+        {
+        	rtldev.print_vga_gains();
+        	int gain = params.vga_gain;
+        	std::cerr << "Selected nearest available vga gain: " << gain
+                  << " (" << 0.1*gain << " dB)" << std::endl;
+        	rtldev.set_vga_gain(gain);
+        }
+    }
+    else
+    {
+        // Print the available gains and select the one nearest to the requested gain.
+        rtldev.print_gains();
+        int gain = rtldev.nearest_gain(params.gain);
+        std::cerr << "Selected nearest available gain: " << gain
+                  << " (" << 0.1*gain << " dB)" << std::endl;
+        rtldev.set_gain(gain);
+    }
+
+
 
     // Temporarily set the frequency to params.cfreq, just so that the device does not
     // complain upon setting the sample rate. If this fails, it's not a big deal:

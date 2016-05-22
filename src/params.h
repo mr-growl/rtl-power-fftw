@@ -33,6 +33,9 @@ public:
   int N = 512;
   int dev_index = 0;
   int gain = 372;
+  int lna_gain = -1;
+  int mixer_gain = -1;
+  int vga_gain = -1;
   int64_t cfreq = 1420405752;
   int64_t startfreq = 0;
   int64_t stopfreq = 0;

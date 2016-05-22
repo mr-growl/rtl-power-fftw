@@ -25,6 +25,8 @@
 
 #include "datastore.h"
 
+//enum gain_types { total, lna, mixer, vga };
+
 class Rtlsdr {
 public:
   Rtlsdr(int dev_index);
@@ -35,19 +37,35 @@ public:
 
   // Reading parameters & data.
   std::vector<int> gains() const;
+  std::vector<int> lna_gains() const;
+  std::vector<int> mixer_gains() const;
+  std::vector<int> vga_gains() const;
+  std::vector<int> specific_gains(gain_types gain_type) const;
   uint32_t sample_rate() const;
   uint32_t frequency() const ;
   bool read(Buffer& buffer) const;
 
   // Parameter setting.
   void set_gain(int gain);
+  void set_lna_gain(int gain);
+  void set_mixer_gain(int gain);
+  void set_vga_gain(int gain);
   void set_frequency(uint32_t frequency);
   void set_freq_correction(int ppm_error);
   void set_sample_rate(uint32_t sample_rate);
 
   // Convenience functions.
-  int nearest_gain(int gain) const;
+  int nearest_gain(int gain);
+  int nearest_lna_gain(int gain);
+  int nearest_mixer_gain(int gain);
+  int nearest_vga_gain(int gain);
+  int nearest_specific_gain(int gain, gain_types gain_type);
+
   void print_gains() const;
+  void print_lna_gains() const;
+  void print_mixer_gains() const;
+  void print_vga_gains() const;
+  void print_specific_gains(gain_types gain_type) const;
 
 private:
   rtlsdr_dev_t *dev;

@@ -54,14 +54,43 @@ Rtlsdr::~Rtlsdr() {
 }
 
 std::vector<int> Rtlsdr::gains() const {
-  int number_of_gains = rtlsdr_get_tuner_gains(dev, NULL);
+	return specific_gains(total);
+}
+std::vector<int> Rtlsdr::lna_gains() const {
+	return specific_gains(lna);
+}
+std::vector<int> Rtlsdr::mixer_gains() const {
+	return specific_gains(mixer);
+}
+std::vector<int> Rtlsdr::vga_gains() const {
+	return specific_gains(vga);
+}
+
+std::vector<int> Rtlsdr::specific_gains(enum gain_types gain_type) const {
+  //Set up a pointer to the "get gains" function and set it in the switch
+  int (*ptr_rtlsdr_get_gains)(rtlsdr_dev_t*,int*);
+  switch(gain_type)
+  {
+    case lna:
+      ptr_rtlsdr_get_gains = &rtlsdr_get_lna_gains;
+      break;
+    case mixer:
+      ptr_rtlsdr_get_gains = &rtlsdr_get_mixer_gains;
+      break;
+    case vga:
+      ptr_rtlsdr_get_gains = &rtlsdr_get_vga_gains;
+      break;
+    default:
+      ptr_rtlsdr_get_gains = &rtlsdr_get_tuner_gains;
+  }
+  int number_of_gains = ptr_rtlsdr_get_gains(dev, NULL);
   if (number_of_gains <= 0) {
     throw RPFexception(
       "RTL device: could not read the number of available gains.",
       ReturnValue::HardwareError);
   }
   std::vector<int> gains(number_of_gains);
-  if (rtlsdr_get_tuner_gains(dev, gains.data()) <= 0) {
+  if (ptr_rtlsdr_get_gains(dev, gains.data()) <= 0) {
     throw RPFexception(
       "RTL device: could not retrieve gain values.",
       ReturnValue::HardwareError);
@@ -108,6 +137,39 @@ void Rtlsdr::set_gain(int gain) {
   }
 }
 
+void Rtlsdr::set_lna_gain(int gain) {
+  int status = 0;
+  status += rtlsdr_set_lna_gain(dev, gain);
+
+  if (status != 0) {
+    throw RPFexception(
+      "RTL device: could not set lna gain.",
+      ReturnValue::HardwareError);
+  }
+}
+
+void Rtlsdr::set_mixer_gain(int gain) {
+  int status = 0;
+  status += rtlsdr_set_mixer_gain(dev, gain);
+
+  if (status != 0) {
+    throw RPFexception(
+      "RTL device: could not set mixer gain.",
+      ReturnValue::HardwareError);
+  }
+}
+
+void Rtlsdr::set_vga_gain(int gain) {
+  int status = 0;
+  status += rtlsdr_set_vga_gain(dev, gain);
+
+  if (status != 0) {
+    throw RPFexception(
+      "RTL device: could not set vga gain.",
+      ReturnValue::HardwareError);
+  }
+}
+
 void Rtlsdr::set_frequency(uint32_t frequency) {
   if (rtlsdr_set_center_freq(dev, frequency) < 0) {
     throw RPFexception(
@@ -137,10 +199,42 @@ void Rtlsdr::set_sample_rate(uint32_t sample_rate) {
   }
 }
 
-int Rtlsdr::nearest_gain(int gain) const {
+int Rtlsdr::nearest_gain(int gain) {
+  return nearest_specific_gain(gain, total);
+}
+
+int Rtlsdr::nearest_lna_gain(int gain) {
+  return nearest_specific_gain(gain, lna);
+}
+
+int Rtlsdr::nearest_mixer_gain(int gain) {
+  return nearest_specific_gain(gain, mixer);
+}
+
+int Rtlsdr::nearest_vga_gain(int gain) {
+  return nearest_specific_gain(gain, vga);
+}
+
+int Rtlsdr::nearest_specific_gain(int gain, gain_types gain_type) {
+  std::vector<int> gain_list;
+  switch(gain_type)
+  {
+    case lna:
+      gain_list = lna_gains();
+      break;
+    case mixer:
+      gain_list = mixer_gains();
+      break;
+    case vga:
+      gain_list = vga_gains();
+      break;
+    case total:
+    default:
+      gain_list = gains();
+  }
   int dif = std::numeric_limits<int>::max();
   int selected = 0;
-  for (const auto& trial_gain : gains()) {
+  for (const auto& trial_gain : gain_list) {
     int temp = abs(trial_gain - gain);
     if ( temp < dif ) {
       dif = temp;
@@ -151,9 +245,46 @@ int Rtlsdr::nearest_gain(int gain) const {
 }
 
 void Rtlsdr::print_gains() const {
-  auto gain_table = gains();
+	print_specific_gains(total);
+}
+void Rtlsdr::print_lna_gains() const {
+	print_specific_gains(lna);
+}
+void Rtlsdr::print_mixer_gains() const {
+	print_specific_gains(mixer);
+}
+void Rtlsdr::print_vga_gains() const {
+	print_specific_gains(vga);
+}
+void Rtlsdr::print_specific_gains(gain_types gain_type) const {
+  std::vector<int> gain_table;
 
-  std::cerr << "Available gains (in 1/10th of dB): ";
+  char titles[][7] = {"lna ","mixer ","vga ",""};
+  int title_index = 3;
+
+  switch(gain_type)
+  {
+    case lna:
+      title_index = 0;
+      gain_table = specific_gains(gain_type);
+      break;
+    case mixer:
+      title_index = 1;
+      gain_table = specific_gains(gain_type);
+      break;
+    case vga:
+      title_index = 2;
+      gain_table = specific_gains(gain_type);
+      break;
+    case total:
+      title_index = 3;
+      gain_table = specific_gains(gain_type);
+      break;
+    default: //just in case
+     gain_table = gains();
+  }
+
+  std::cerr << "Available " << titles[title_index] << "gains (in 1/10th of dB): ";
   for (unsigned int i = 0; i < gain_table.size(); i++) {
     if (i != 0)
       std::cerr << ", ";
@@ -161,3 +292,4 @@ void Rtlsdr::print_gains() const {
   }
   std::cerr << std::endl;
 }
+

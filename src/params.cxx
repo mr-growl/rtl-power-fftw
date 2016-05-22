@@ -126,6 +126,12 @@ Params::Params(int argc, char** argv) {
     cmd.add( arg_linear );
     TCLAP::ValueArg<int> arg_gain("g","gain","Receiver gain.",false, gain, "1/10th of dB");
     cmd.add( arg_gain );
+    TCLAP::ValueArg<int> arg_lna_gain("","lna-gain","Receiver lna gain.",false, lna_gain, "1/10th of dB");
+    cmd.add( arg_lna_gain );
+    TCLAP::ValueArg<int> arg_mixer_gain("","mixer-gain","Receiver mixer gain.",false, mixer_gain, "1/10th of dB");
+    cmd.add( arg_mixer_gain );
+    TCLAP::ValueArg<int> arg_vga_gain("","vga-gain","Receiver vga gain.",false, vga_gain, "1/10th of dB");
+    cmd.add( arg_vga_gain );
     TCLAP::ValueArg<std::string> arg_freq("f","freq","Center frequency of the receiver or frequency range to scan.",false,"","Hz | Hz:Hz");
     cmd.add( arg_freq );
     TCLAP::ValueArg<std::string> arg_session_duration("e","elapsed","Scan session duration.",false,"","seconds");
@@ -154,6 +160,9 @@ Params::Params(int argc, char** argv) {
     }
     linear = arg_linear.getValue();
     gain = arg_gain.getValue();
+    lna_gain = arg_lna_gain.getValue();
+    mixer_gain = arg_mixer_gain.getValue();
+    vga_gain = arg_vga_gain.getValue();
     sample_rate = arg_rate.getValue();
     buffers = arg_buffers.getValue();
     buf_length = arg_bufferlen.getValue();
